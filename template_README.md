@@ -83,6 +83,8 @@ services:
       RELOGIN_AFTER_TWOFA_TIMEOUT: ${RELOGIN_AFTER_TWOFA_TIMEOUT:-no}
       TWOFA_EXIT_INTERVAL: ${TWOFA_EXIT_INTERVAL:-60}
       TWOFA_DEVICE: ${TWOFA_DEVICE:-}
+      IBC_TOTP_SECRET: ${IBC_TOTP_SECRET:-}
+      IBC_TOTP_SECRET_FILE: ${IBC_TOTP_SECRET_FILE:-}
       EXISTING_SESSION_DETECTED_ACTION: ${EXISTING_SESSION_DETECTED_ACTION:-primary}
       ALLOW_BLIND_TRADING: ${ALLOW_BLIND_TRADING:-no}
       TIME_ZONE: ${TIME_ZONE:-Etc/UTC}
@@ -135,6 +137,8 @@ READ_ONLY_API=no
 VNC_SERVER_PASSWORD=myVncPassword
 TWOFA_TIMEOUT_ACTION=restart
 TWOFA_DEVICE=
+# Optional: Base32 seed for d0zingcat/IBC TOTP support. Prefer _FILE.
+# IBC_TOTP_SECRET_FILE=/run/secrets/ibc_totp_secret
 BYPASS_WARNING=
 AUTO_RESTART_TIME=11:59 PM
 AUTO_LOGOFF_TIME=
@@ -190,6 +194,8 @@ All environment variables are common between ibgateway and TWS image, unless spe
 | `VNC_SERVER_PASSWORD_FILE`  | VNC server password. If not defined, then VNC server will NOT start. Specific to ibgateway, ignored by TWS. | **not defined** (VNC disabled) |
 | `TWOFA_TIMEOUT_ACTION`      | 'exit' or 'restart', set to 'restart if you set `AUTO_RESTART_TIME`. See IBC [documentation](https://github.com/IbcAlpha/IBC/blob/master/userguide.md#second-factor-authentication)  | exit  |
 | `TWOFA_DEVICE` | second factor authentication device. See IBC [documentation](https://github.com/IbcAlpha/IBC/blob/c98d0bcc2ead9b8ab3900a23a707f01f8fd7dfbc/resources/config.ini#L104) | **not defined** |
+| `IBC_TOTP_SECRET` | Base32 TOTP seed for the maintained `d0zingcat/IBC` build. The seed is never logged; prefer `IBC_TOTP_SECRET_FILE`. Set `TWOFA_DEVICE` to the exact `Mobile Authenticator app` label when device selection is shown. | **not defined** |
+| `IBC_TOTP_SECRET_FILE` | File containing `IBC_TOTP_SECRET`, for example a Docker secret mounted at `/run/secrets/ibc_totp_secret`. | **not defined** |
 | `TWOFA_EXIT_INTERVAL` | It controls how long (in seconds) IBC waits for login to complete after the user acknowledges the second factor authentication. See [IBC documentation](https://github.com/IbcAlpha/IBC/blob/38593af5193ccd634aa226cc66242adc8718b653/resources/config.ini#L147) | 60 seconds |
 | `BYPASS_WARNING` | Settings relate to the corresponding 'Precautions' checkboxes in the API section of the Global Configuration dialog. Accepted values `yes`, `no` if not set, the existing TWS/Gateway configuration is unchanged  | **not defined**                                      |
 | `AUTO_RESTART_TIME`  | time to restart IB Gateway, does not require daily 2FA validation. format hh:mm AM/PM. See IBC [documentation](https://github.com/IbcAlpha/IBC/blob/master/userguide.md#ibc-user-guide) | **not defined**  |

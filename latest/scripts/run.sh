@@ -70,6 +70,10 @@ start_vnc() {
 }
 
 start_IBC() {
+	file_env 'IBC_TOTP_SECRET'
+	if [ -n "${IBC_TOTP_SECRET:-}" ]; then
+		echo ".> IBC TOTP automation enabled"
+	fi
 	echo ".> Starting IBC in ${TRADING_MODE} mode, with params:"
 	echo ".>		Version: ${TWS_MAJOR_VRSN}"
 	echo ".>		program: ${IBC_COMMAND:-gateway}"
@@ -87,6 +91,7 @@ start_IBC() {
 	_p="$!"
 	pid+=("$_p")
 	export pid
+	unset_env 'IBC_TOTP_SECRET'
 	echo "$_p" >"/tmp/pid_${TRADING_MODE}"
 }
 

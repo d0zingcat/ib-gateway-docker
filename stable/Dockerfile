@@ -10,19 +10,18 @@ FROM ubuntu:24.04 AS setup
 
 ENV IB_GATEWAY_VERSION=10.45.1j
 ENV IB_GATEWAY_CHANNEL=stable
-ENV IBC_VERSION=3.24.1
+ENV IBC_VERSION=3.24.2
 ARG DEBIAN_FRONTEND=noninteractive
 ARG IB_GATEWAY_REPO="https://github.com/gnzsnz/ib-gateway-docker"
-ARG IBC_FILE="IBCLinux-${IBC_VERSION}.zip"
-ARG IBC_REPO="https://github.com/IbcAlpha/IBC"
-ARG IBC_URL="${IBC_REPO}/releases/download/${IBC_VERSION}/${IBC_FILE}"
+ARG IBC_REPOSITORY="https://github.com/d0zingcat/IBC.git"
+ARG IBC_REF="e29d9c1"
 
 WORKDIR /tmp/setup
 
 # Prepare system
 RUN apt-get update -y && \
   apt-get install --no-install-recommends --yes \
-  curl ca-certificates unzip && \
+  ant ca-certificates curl git openjdk-17-jdk && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   if [ "$(uname -m)" = "aarch64" ]; then \
@@ -43,10 +42,13 @@ RUN apt-get update -y && \
   if [ -d "/root/Jts/ibgateway/${IB_GATEWAY_VERSION}/jre" ]; then \
     echo "/home/ibgateway/Jts/ibgateway/${IB_GATEWAY_VERSION}/jre" > "/root/Jts/ibgateway/${IB_GATEWAY_VERSION}/.install4j/inst_jre.cfg" ; \
   fi && \
-  # Install IBC
-  curl -sSOL "${IBC_URL}" && \
+  # Build the maintained IBC fork against this Gateway version's jars.
+  git clone "${IBC_REPOSITORY}" /tmp/ibc-src && \
+  cd /tmp/ibc-src && \
+  git checkout "${IBC_REF}" && \
+  IBC_BIN="/root/Jts/ibgateway/${IB_GATEWAY_VERSION}/jars" ant jar && \
   mkdir /root/ibc && \
-  unzip "./${IBC_FILE}" -d /root/ibc && \
+  cp -a resources/. /root/ibc/ && \
   chmod -R u+x /root/ibc/*.sh && \
   chmod -R u+x /root/ibc/scripts/*.sh
 
@@ -86,7 +88,11 @@ COPY --chown=${USER_ID}:${USER_GID} --from=setup /root/ ${HOME}
 RUN apt-get update -y && \
   apt-get upgrade -y && \
   apt-get install --no-install-recommends --yes \
-  gettext-base socat xvfb x11vnc sshpass openssh-client sudo telnet && \
+  gettext-base socat xvfb x11vnc sshpass openssh-client sudo telnet ca-certificates \
+  libatk-bridge2.0-0 libatk1.0-0 libatspi2.0-0 libc6 libcairo2 libcups2 libdbus-1-3 \
+  libdrm2 libexpat1 libgbm1 libglib2.0-0 libgtk-3-0 libnspr4 libnss3 libpango-1.0-0 \
+  libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxkbcommon0 \
+  libxrandr2 fonts-liberation libasound2t64 libxtst6 xdg-utils && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   if id ubuntu; then \
