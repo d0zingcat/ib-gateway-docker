@@ -46,6 +46,10 @@ RUN apt-get update -y && \
   git clone "${IBC_REPOSITORY}" /tmp/ibc-src && \
   cd /tmp/ibc-src && \
   git checkout "${IBC_REF}" && \
+  # The Gateway installer sets JAVA_HOME to its bundled JRE, which cannot
+  # compile IBC's Java 17 sources. Build with the JDK installed above.
+  JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
+  PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:${PATH} \
   IBC_BIN="/root/Jts/ibgateway/${IB_GATEWAY_VERSION}/jars" ant jar && \
   mkdir /root/ibc && \
   cp -a resources/. /root/ibc/ && \
