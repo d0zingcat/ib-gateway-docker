@@ -14,7 +14,7 @@ ENV IBC_VERSION=3.24.2
 ARG DEBIAN_FRONTEND=noninteractive
 ARG IB_GATEWAY_REPO="https://github.com/gnzsnz/ib-gateway-docker"
 ARG IBC_REPOSITORY="https://github.com/d0zingcat/IBC.git"
-ARG IBC_REF="e29d9c1"
+ARG IBC_REF="e29d9c107e161c0f21bc84d16f0d3135ad5b9cad"
 
 WORKDIR /tmp/setup
 
