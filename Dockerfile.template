@@ -13,16 +13,15 @@ ENV IB_GATEWAY_CHANNEL=$CHANNEL
 ENV IBC_VERSION=3.24.2
 ARG DEBIAN_FRONTEND=noninteractive
 ARG IB_GATEWAY_REPO="https://github.com/gnzsnz/ib-gateway-docker"
-ARG IBC_FILE="IBCLinux-${IBC_VERSION}.zip"
-ARG IBC_REPO="https://github.com/IbcAlpha/IBC"
-ARG IBC_URL="${IBC_REPO}/releases/download/${IBC_VERSION}/${IBC_FILE}"
+ARG IBC_REPOSITORY="https://github.com/d0zingcat/IBC.git"
+ARG IBC_REF="19b1257b4e823c9b0a86590aa5e4bd003e8de086"
 
 WORKDIR /tmp/setup
 
 # Prepare system
 RUN apt-get update -y && \
   apt-get install --no-install-recommends --yes \
-  curl ca-certificates unzip && \
+  ant ca-certificates curl git openjdk-17-jdk && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
   if [ "$(uname -m)" = "aarch64" ]; then \
@@ -43,10 +42,13 @@ RUN apt-get update -y && \
   if [ -d "/root/Jts/ibgateway/${IB_GATEWAY_VERSION}/jre" ]; then \
     echo "/home/ibgateway/Jts/ibgateway/${IB_GATEWAY_VERSION}/jre" > "/root/Jts/ibgateway/${IB_GATEWAY_VERSION}/.install4j/inst_jre.cfg" ; \
   fi && \
-  # Install IBC
-  curl -sSOL "${IBC_URL}" && \
+  # Build the maintained IBC fork against this Gateway version's jars.
+  git clone "${IBC_REPOSITORY}" /tmp/ibc-src && \
+  cd /tmp/ibc-src && \
+  git checkout "${IBC_REF}" && \
+  IBC_BIN="/root/Jts/ibgateway/${IB_GATEWAY_VERSION}/jars" ant jar && \
   mkdir /root/ibc && \
-  unzip "./${IBC_FILE}" -d /root/ibc && \
+  cp -a resources/. /root/ibc/ && \
   chmod -R u+x /root/ibc/*.sh && \
   chmod -R u+x /root/ibc/scripts/*.sh
 
