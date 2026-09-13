@@ -61,9 +61,13 @@ services:
     restart: always
     build:
       context: ./stable
+      args:
+        IB_GATEWAY_REPO: ${IB_GATEWAY_REPO:-https://github.com/gnzsnz/ib-gateway-docker}
+        IBC_REPOSITORY: ${IBC_REPOSITORY:-https://github.com/d0zingcat/IBC.git}
+        IBC_REF: ${IBC_REF:-e29d9c1}
       tags:
-        - "ghcr.io/gnzsnz/ib-gateway:stable"
-    image: ghcr.io/gnzsnz/ib-gateway:stable
+        - "${IB_GATEWAY_IMAGE:-ghcr.io/d0zingcat/ib-gateway:stable}"
+    image: ${IB_GATEWAY_IMAGE:-ghcr.io/d0zingcat/ib-gateway:stable}
     environment:
       TWS_USERID: ${TWS_USERID}
       TWS_PASSWORD: ${TWS_PASSWORD}
@@ -148,6 +152,10 @@ RELOGIN_AFTER_TWOFA_TIMEOUT=yes
 EXISTING_SESSION_DETECTED_ACTION=primary
 ALLOW_BLIND_TRADING=no
 TIME_ZONE=Europe/Zurich
+IB_GATEWAY_IMAGE=ghcr.io/d0zingcat/ib-gateway:stable
+IBC_REPOSITORY=https://github.com/d0zingcat/IBC.git
+# Pin the reviewed IBC commit rather than tracking a mutable branch.
+IBC_REF=e29d9c1
 CUSTOM_CONFIG=
 SSH_TUNNEL=
 SSH_OPTIONS=
@@ -169,6 +177,15 @@ Once `docker-compose.yml` and `.env` are in place you can start the container wi
 ```bash
 docker compose up
 ```
+
+### Maintained IBC build inputs
+
+The Gateway image builds IBC from `IBC_REPOSITORY` at `IBC_REF`, against the
+Gateway version's own `jars/` directory. `IBC_REF` should be a full immutable
+Git commit SHA in production; update it only after reviewing and testing the
+corresponding IBC change. `IB_GATEWAY_IMAGE` controls the image tag produced by
+Compose, while `IB_GATEWAY_REPO` controls the source of the versioned Gateway
+installer.
 
 To get a GUI you can use vnc for ib-gateway or RDP for TWS.
 
