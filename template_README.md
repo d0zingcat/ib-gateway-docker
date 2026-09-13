@@ -64,7 +64,7 @@ services:
       args:
         IB_GATEWAY_REPO: ${IB_GATEWAY_REPO:-https://github.com/gnzsnz/ib-gateway-docker}
         IBC_REPOSITORY: ${IBC_REPOSITORY:-https://github.com/d0zingcat/IBC.git}
-        IBC_REF: ${IBC_REF:-e29d9c107e161c0f21bc84d16f0d3135ad5b9cad}
+        IBC_REF: ${IBC_REF:-19b1257b4e823c9b0a86590aa5e4bd003e8de086}
       tags:
         - "${IB_GATEWAY_IMAGE:-ghcr.io/d0zingcat/ib-gateway:stable}"
     image: ${IB_GATEWAY_IMAGE:-ghcr.io/d0zingcat/ib-gateway:stable}
@@ -155,7 +155,7 @@ TIME_ZONE=Europe/Zurich
 IB_GATEWAY_IMAGE=ghcr.io/d0zingcat/ib-gateway:stable
 IBC_REPOSITORY=https://github.com/d0zingcat/IBC.git
 # Pin the reviewed IBC commit rather than tracking a mutable branch.
-IBC_REF=e29d9c107e161c0f21bc84d16f0d3135ad5b9cad
+IBC_REF=19b1257b4e823c9b0a86590aa5e4bd003e8de086
 CUSTOM_CONFIG=
 SSH_TUNNEL=
 SSH_OPTIONS=
