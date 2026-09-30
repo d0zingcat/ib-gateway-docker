@@ -8,7 +8,7 @@
 # hadolint global ignore=DL3008,DL4006
 FROM ubuntu:24.04 AS setup
 
-ENV IB_GATEWAY_VERSION=10.50.1e
+ENV IB_GATEWAY_VERSION=10.51.1a
 ENV IB_GATEWAY_CHANNEL=latest
 ENV IBC_VERSION=3.24.2
 ARG DEBIAN_FRONTEND=noninteractive
@@ -47,9 +47,10 @@ RUN apt-get update -y && \
   cd /tmp/ibc-src && \
   git checkout "${IBC_REF}" && \
   # The Gateway installer sets JAVA_HOME to its bundled JRE, which cannot
-  # compile IBC's Java 17 sources. Build with the JDK installed above.
-  JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
-  PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:${PATH} \
+  # compile IBC's Java 17 sources. Build with the system JDK installed above.
+  # Resolved by glob so aarch64 builders pick java-17-openjdk-arm64.
+  JDK17_HOME="$(ls -d /usr/lib/jvm/java-17-openjdk-* | head -1)" && \
+  JAVA_HOME="${JDK17_HOME}" PATH="${JDK17_HOME}/bin:${PATH}" \
   IBC_BIN="/root/Jts/ibgateway/${IB_GATEWAY_VERSION}/jars" ant jar && \
   mkdir /root/ibc && \
   cp -a resources/. /root/ibc/ && \
@@ -68,7 +69,7 @@ COPY ./scripts /root/scripts
 
 FROM ubuntu:24.04
 
-ENV IB_GATEWAY_VERSION=10.50.1e
+ENV IB_GATEWAY_VERSION=10.51.1a
 # IB Gateway user constants
 ARG USER_ID="${USER_ID:-1000}"
 ARG USER_GID="${USER_GID:-1000}"
