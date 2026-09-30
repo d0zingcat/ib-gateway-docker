@@ -47,9 +47,10 @@ RUN apt-get update -y && \
   cd /tmp/ibc-src && \
   git checkout "${IBC_REF}" && \
   # The Gateway installer sets JAVA_HOME to its bundled JRE, which cannot
-  # compile IBC's Java 17 sources. Build with the JDK installed above.
-  JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
-  PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:${PATH} \
+  # compile IBC's Java 17 sources. Build with the system JDK installed above.
+  # Resolved by glob so aarch64 builders pick java-17-openjdk-arm64.
+  JDK17_HOME="$(ls -d /usr/lib/jvm/java-17-openjdk-* | head -1)" && \
+  JAVA_HOME="${JDK17_HOME}" PATH="${JDK17_HOME}/bin:${PATH}" \
   IBC_BIN="/root/Jts/ibgateway/${IB_GATEWAY_VERSION}/jars" ant jar && \
   mkdir /root/ibc && \
   cp -a resources/. /root/ibc/ && \
