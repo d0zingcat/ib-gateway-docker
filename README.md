@@ -39,10 +39,10 @@ Images are provided for [IB gateway][1] and [TWS][2]. With the following tags:
 
 | Image| Channel  | IB Gateway Version  | IBC Version      | Docker Tags                                    |
 | --- | -------- | ------------------- | ---------------- | ---------------------------------------------- |
-| [ib-gateway][1] | `latest` | `10.51.1a` | `3.24.2` | `latest` `10.51` `10.51.1a` |
-| [ib-gateway][1] |`stable` | `10.50.1e` | `3.24.2` | `stable` `10.50` `10.50.1e` |
-| [tws-rdesktop][2] | `latest` | `10.51.1a` | `3.24.2` | `latest` `10.51` `10.51.1a` |
-| [tws-rdesktop][2] |`stable` | `10.50.1e` | `3.24.2` | `stable` `10.50` `10.50.1e` |
+| [ib-gateway][1] | `latest` | `10.51.1c` | `3.24.2` | `latest` `10.51` `10.51.1c` |
+| [ib-gateway][1] |`stable` | `10.50.1f` | `3.24.2` | `stable` `10.50` `10.50.1f` |
+| [tws-rdesktop][2] | `latest` | `10.51.1c` | `3.24.2` | `latest` `10.51` `10.51.1c` |
+| [tws-rdesktop][2] |`stable` | `10.50.1f` | `3.24.2` | `stable` `10.50` `10.50.1f` |
 
 All tags are available in the container repository for [ib-gateway][1] and
 [tws-rdesktop][2]. IB Gateway and TWS share the same version numbers and tags.
@@ -241,8 +241,8 @@ All environment variables are common between ibgateway and TWS image, unless spe
 | `SSH_RDP_PORT`  | If set, then a remote ssh tunnel will be created with remote port equal to `SSH_RDP_PORT`. Specific to TWS, ignored by ibgateway.  | **not defined** |
 | `PUID` | User `uid` for user `abc` (linuxserver default user name). Specific to TWS, ignored by ibgateway. | 1000   |
 | `PGID` | User `gid` for user `abc` (linuxserver default user name). Specific to TWS, ignored by ibgateway.  | 1000   |
-| `PASSWD` | Password for user `abc` (linuxserver default user name). Specific to TWS, ignored by ibgateway. | abc  |
-| `PASSWD_FILE` | File containing password for user `abc` (linuxserver default user name). Specific to TWS, ignored by ibgateway. See [credentials section](#credentials). | abc  |
+| `RDP_PASSWORD` | Password for user `abc` (linuxserver default user name). Specific to TWS, ignored by ibgateway. | abc  |
+| `RDP_PASSWORD_FILE` | File containing password for user `abc` (linuxserver default user name). Specific to TWS, ignored by ibgateway. See [credentials section](#credentials). | abc  |
 | `START_SCRIPTS` | Directory with bash scripts to run **before** X environment is up. See [start-up scripts](#start-up-scripts) | **not defined** |
 | `X_SCRIPTS` | Directory with bash scripts to run **after** X environment is running. See [start-up scripts](#start-up-scripts) | **not defined** |
 | `IBC_SCRIPTS` | Directory with bash scripts to run **after** IBC is running. See [start-up scripts](#start-up-scripts) | **not defined** |
@@ -273,15 +273,25 @@ Note that with the above `docker-compose.yml`, ports are only exposed to the doc
 
 From `10.26.1h` it's possible to run TWS in a container. [tws-rdesktop](https://github.com/gnzsnz/ib-gateway-docker/pkgs/container/tws-rdesktop) image provides a desktop environment that allows to use TWS.
 
+### TWS desktop password migration
+
+The `latest` TWS image now uses `RDP_PASSWORD` and `RDP_PASSWORD_FILE`.
+Rename `PASSWD` to `RDP_PASSWORD` and `PASSWD_FILE` to `RDP_PASSWORD_FILE`
+in your environment and custom Compose configuration. Password files must
+be mounted inside the container. The included TWS Compose example uses `latest`.
+
+The `stable` TWS image still uses the LinuxServer desktop base and requires
+`PASSWD` or `PASSWD_FILE`. Keep those names when using the `stable` image.
+
 ### Performance considerations for TWS
 
 [tws-rdesktop](https://github.com/gnzsnz/ib-gateway-docker/pkgs/container/tws-rdesktop) has the following recomended settings.
 
 In [tws-docker-compose.yml](https://github.com/gnzsnz/ib-gateway-docker/blob/master/tws-docker-compose.yml):
 
-- set `/dev/dri:/dev/dri`
 - shm_size: "1gb"
 - `seccomp:unconfined`
+- `apparmor:unconfined`, required. Docker's default AppArmor profile blocks the sandboxed SVG icon loader GNOME/XFCE uses, which can crash the desktop session mid-use.
 - `JAVA_HEAP_SIZE`, depending your TWS you might need to increase it. See [Increase Memory Size for TWS](https://ibkrguides.com/tws/usersguidebook/priceriskanalytics/custommemory.htm)
 - Volumes, set a volume for `/tmp`. ex `tws_tmp:/tmp`
 - Volumes, set a volumen for `/config`
