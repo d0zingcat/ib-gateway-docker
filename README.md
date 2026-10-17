@@ -49,6 +49,9 @@ All tags are available in the container repository for [ib-gateway][1] and
 
 ## How to use it?
 
+For this fork's GitHub image publishing and Dokploy automatic deployment,
+see [Gateway deployment](docs/gateway-deployment.md).
+
 Create a `docker-compose.yml` file (or include ib-gateway services on your existing
 one). The sample files provided can be used as starting point,
 [ib-gateway-compose](https://github.com/gnzsnz/ib-gateway-docker/blob/master/docker-compose.yml) and

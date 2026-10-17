@@ -1,0 +1,112 @@
+name: Publish Gateway and deploy
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-gateway-master
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'd0zingcat/ib-gateway-docker' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: [stable, latest]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-qemu-action@v4
+        with:
+          platforms: arm64
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read Gateway version
+        id: version
+        env:
+          CHANNEL: ${{ matrix.channel }}
+        run: |
+          version=$(sed -n 's/^ENV IB_GATEWAY_VERSION=//p' "$CHANNEL/Dockerfile" | head -n 1)
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build and publish Gateway
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.channel }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/d0zingcat/ib-gateway:${{ matrix.channel }}
+            ghcr.io/d0zingcat/ib-gateway:${{ matrix.channel }}-sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}-${{ matrix.channel }}
+          cache-from: type=gha,scope=gateway-${{ matrix.channel }}
+          cache-to: type=gha,mode=max,scope=gateway-${{ matrix.channel }}
+
+      - name: Record published image
+        env:
+          CHANNEL: ${{ matrix.channel }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          REVISION: ${{ github.sha }}
+        run: |
+          printf '### Gateway %s\n\n- Revision: %s\n- Digest: %s\n' \
+            "$CHANNEL" "$REVISION" "$DIGEST" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    needs: publish
+    if: vars.DOKPLOY_AUTO_DEPLOY == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: paper
+            webhook_secret: DOKPLOY_PAPER_DEPLOY_URL
+          - target: live
+            webhook_secret: DOKPLOY_LIVE_DEPLOY_URL
+    name: Deploy ${{ matrix.target }}
+    steps:
+      - name: Notify Dokploy
+        env:
+          DOKPLOY_DEPLOY_URL: ${{ secrets[matrix.webhook_secret] }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+        run: |
+          if [ -z "$DOKPLOY_DEPLOY_URL" ]; then
+            echo 'Required Dokploy webhook secret is missing.' >&2
+            exit 1
+          fi
+          status=$(curl --fail --silent --show-error --max-time 60 \
+            --output /dev/null --request POST "$DOKPLOY_DEPLOY_URL" \
+            --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+            --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+            --write-out '%{http_code}')
+          case "$status" in
+            2??) ;;
+            *) echo "Dokploy webhook returned HTTP $status." >&2; exit 1 ;;
+          esac
+          echo 'Dokploy accepted the deployment webhook; check deployment status in Dokploy.'
