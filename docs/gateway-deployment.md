@@ -29,9 +29,12 @@ digest in its run summary. Pin a digest when an immutable reference is needed.
    variables, password mounts, network settings, ports, and runtime settings.
    Remove deployment overrides for Dockerfile-owned version variables so a
    future Gateway upgrade also selects the correct installation directory.
-3. Disable Git push auto-deployment for both applications. Copy each existing
-   application's deployment webhook to its own GitHub Actions secret:
-   `DOKPLOY_PAPER_DEPLOY_URL` and `DOKPLOY_LIVE_DEPLOY_URL`.
+3. Switching the source to Docker stops Git provider builds. Remove any old
+   direct Git push hooks for these applications from the repository, and keep
+   Dokploy's **Auto Deploy** enabled in Docker mode: this setting also gates
+   deployment webhooks. Copy each application's deployment webhook to its own
+   GitHub Actions secret: `DOKPLOY_PAPER_DEPLOY_URL` and
+   `DOKPLOY_LIVE_DEPLOY_URL`.
 4. For a Cloudflare Access protected endpoint, also configure
    `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET`. Keep webhook URLs and
    credentials out of the repository and logs.
